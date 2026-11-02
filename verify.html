@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#0b3d91"><meta name="robots" content="noindex"><link rel="stylesheet" href="assets/app.css"><title>Verify NOC - NOC SmartTrack demo</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b3d91'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='%23f5b800' font-family='sans-serif' font-weight='bold'%3ENOC%3C/text%3E%3C/svg%3E"></head>
+<body class="min-h-screen flex flex-col bg-slate-50 text-slate-900 antialiased">
+<div class="bg-amber-300 text-amber-950 text-xs sm:text-sm text-center py-1.5 px-2 font-medium">Demo &ndash; fictional data, stored only in this browser. Not an official PSPCL system.</div>
+<header class="bg-brand text-white"><div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between"><span class="font-bold">NOC SmartTrack <span class="text-gold">demo</span> &middot; Verify NOC</span><a class="nav-a" href="./">Open demo</a></div></header>
+<main id="out" class="flex-1 max-w-xl w-full mx-auto p-4"><p class="text-slate-500">Checking...</p></main>
+<script src="js/vendor/jspdf.umd.min.js"></script>
+<script src="js/vendor/qrcode-generator.js"></script>
+<script src="js/util.js"></script>
+<script src="js/logic.js"></script>
+<script src="js/store.js"></script>
+<script src="js/pdf.js"></script>
+<script>
+(async function () {
+  var N = NOC, h = N.h, out = document.getElementById('out');
+  var code = (new URLSearchParams(location.search).get('code') || '').trim();
+  function form(msg) {
+    return h`<form method="get" class="card"><h1 class="text-lg font-bold text-brand-dark">Verify a NOC</h1>${msg ? h`<p class="text-sm mt-1">${msg}</p>` : ''}<label class="lbl mt-3">Verification code (20 characters)</label><input class="inp" name="code" value="${code}" autocomplete="off" required><button class="btn mt-3">Verify</button></form>`;
+  }
+  const demoNote = h`<p class="alert a-warn mt-3 text-xs">This is a <b>demonstration</b>. There is no server: the record is looked up in the data stored in <b>this browser</b> only (the built-in fictional demo data plus anything you created here). A NOC issued in another browser or device cannot be found. Nothing here is an official PSPCL certificate.</p>`;
+  try {
+    await N.init({ readonly: true });
+    if (!code) { out.innerHTML = form('').s + demoNote.s; return; }
+    var cert = N.T('noc_certificates').find(function (c) { return c.code === code; });
+    if (!cert) {
+      out.innerHTML = h`<div class="card border-red-300 text-center"><div class="text-4xl">&#10060;</div><h1 class="text-xl font-bold text-red-800 mt-1" id="vstate">Not found in this browser</h1><p class="text-sm mt-1">No NOC in this browser's demo data matches this code.</p></div>${demoNote}<div class="mt-3">${form('')}</div>`.s; return;
+    }
+    var app = N.APP(cert.app_id), prom = N.promoterOf(app), today = N.todayIST();
+    var state = cert.status === 'REVOKED' ? 'REVOKED' : cert.status === 'SUPERSEDED' ? 'SUPERSEDED' : (cert.valid_upto && cert.valid_upto < today ? 'EXPIRED' : 'VALID');
+    var ok = state === 'VALID', kind = cert.kind === 'CONDITIONAL' ? 'Conditional' : 'Final';
+    var msg = { SUPERSEDED: 'Superseded by a later NOC for the same project (e.g. the Final NOC replaced the Conditional NOC).', REVOKED: 'This certificate has been revoked.', EXPIRED: 'The validity period has ended.', VALID: '' }[state];
+    var load = app.verified_load_kva || app.estimated_load_kva;
+    out.innerHTML = h`<div class="card ${ok ? 'border-emerald-400' : 'border-red-300'}">
+  <div class="text-center"><div class="text-5xl">${N.raw(ok ? '&#9989;' : '&#9888;&#65039;')}</div>
+   <h1 id="vstate" class="text-xl font-bold mt-1 ${ok ? 'text-emerald-800' : 'text-red-800'}">${kind} NOC - ${state}</h1>
+   ${msg ? h`<p class="text-sm">${msg}</p>` : ''}
+   <p class="alert a-warn mt-2 text-xs">DEMO &ndash; fictional data, not a valid NOC.</p></div>
+  <dl class="kv mt-4"><dt>NOC number</dt><dd>${cert.noc_no}</dd><dt>Application</dt><dd>${app.app_no}</dd><dt>Project</dt><dd>${app.project_name}</dd><dt>Promoter</dt><dd>${prom ? (prom.org_name || prom.name) : ''}</dd><dt>Location</dt><dd>${app.district}</dd>
+   <dt>Load</dt><dd>${N.num(load, 2)} kVA (${app.verified_load_kva ? 'verified' : 'estimated'})</dd><dt>Issued</dt><dd>${N.fmtDT(cert.issued_at)} IST</dd><dt>Valid up to</dt><dd>${cert.valid_upto ? N.fmtD(cert.valid_upto) : '-'}</dd>
+   <dt>Record fingerprint</dt><dd class="text-xs font-mono break-all">${cert.fingerprint}</dd></dl>
+  <div class="mt-4 text-center"><button id="pdfbtn" class="btn-outline">View demo PDF</button></div></div>${demoNote}`.s;
+    document.getElementById('pdfbtn').onclick = function () { N.downloadBlob(N.nocPdfBlob(cert), cert.noc_no.replace(/[^A-Za-z0-9]+/g, '_') + '_DEMO.pdf'); };
+  } catch (e) { console.error(e); out.innerHTML = '<div class="alert a-err">Could not verify: ' + N.esc(e.message) + '</div>'; }
+  finally { window.__nocReady = true; }
+})();
+</script>
+</body></html>

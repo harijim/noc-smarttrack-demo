@@ -1,0 +1,6 @@
+<html><body><table border="1">
+<tr><th>APP_NO</th><th>DATED</th><th>APP_TYPE</th><th>PROJECT_NAME</th><th>CONSTITUTION</th><th>PR_LOAD</th><th>PR_CIRCLE</th><th>APP_STATUS</th><th>PENDING_TASK</th><th>RESPONSIBLE</th><th>DAYS_ALLOTED</th><th>DAYS_ELAPSED</th></tr>
+<tr><td>990001</td><td>05-08-26</td><td>NewNOC</td><td>FICTIONAL TEST PROJECT ONE</td><td>COMPANY</td><td>1,250.50</td><td>TEST CIRCLE</td><td>BG LETTER ISSUED TO DEVELOPER</td><td>BG[35%] UPLOAD PENDING</td><td>CONSUMER</td><td>15</td><td>20</td></tr>
+<tr><td>990002</td><td>10-09-26</td><td>NewNOC</td><td>FICTIONAL TEST PROJECT TWO</td><td>PARTNERSHIP</td><td>640</td><td>TEST CIRCLE</td><td>APPLICATION SUBMITTED</td><td>APPLICATION APPROVAL PENDING</td><td>XEN</td><td>10</td><td>3</td></tr>
+<tr><td>990003</td><td>01-10-26</td><td>RevNOC</td><td>FICTIONAL TEST PROJECT THREE</td><td>COMPANY</td><td>300</td><td>TEST CIRCLE B</td><td>NOC ISSUED</td><td>NA</td><td>NA</td><td></td><td></td></tr>
+</table></body></html>
